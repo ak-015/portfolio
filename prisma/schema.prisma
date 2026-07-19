@@ -1,0 +1,298 @@
+// ============================================================================
+// Prisma schema — shared by the public portfolio site and the admin portal.
+// This is the single source of truth for the database. The admin portal
+// prompt extends this file (adding AdminUser / OtpRequest / PendingChange
+// models below) rather than defining a separate schema.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+enum ProjectCategory {
+  WEB
+  ANDROID
+  CIVIL_ENGINEERING
+  UI_UX
+  OTHER
+}
+
+enum FieldInputType {
+  TEXT
+  TEXTAREA
+  RICH_TEXT
+  IMAGE
+  URL
+  NUMBER
+  RATING
+  DATE
+  BOOLEAN
+  SELECT
+}
+
+// ----------------------------------------------------------------------------
+// About / hero / site-wide content
+// ----------------------------------------------------------------------------
+
+/// Singleton-ish table (one row per "section") holding editable hero/about copy.
+model AboutContent {
+  id             String   @id @default(cuid())
+  section        String   @unique // "hero" | "about_intro" | "seo_defaults" ...
+  heading        String?
+  subheading     String?  @db.Text
+  body           String?  @db.Text
+  name           String?
+  email          String?
+  phone          String?
+  location       String?
+  languages      String? // comma separated, rendered as list
+  educationLabel String? // short label shown in About info table
+  resumeUrl      String?
+  profileImageUrl String?
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+}
+
+model RoleTitle {
+  id        String   @id @default(cuid())
+  title     String // e.g. "Full Stack Developer"
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model SocialLink {
+  id        String   @id @default(cuid())
+  platform  String // "github" | "linkedin" | "instagram" | "youtube" | "twitter" ...
+  url       String
+  icon      String? // optional icon key override
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model StatItem {
+  id        String   @id @default(cuid())
+  label     String // "Projects Completed"
+  value     String // "50+"
+  icon      String? // icon key, e.g. "briefcase"
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model ServiceItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model TechStackItem {
+  id        String   @id @default(cuid())
+  category  String // "Languages" | "Frontend" | "Backend" | "Database" | "Tools" | "Mobile" | "Other"
+  name      String
+  icon      String? // icon key or Cloudinary URL
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Projects
+// ----------------------------------------------------------------------------
+
+model Project {
+  id           String          @id @default(cuid())
+  slug         String          @unique
+  title        String
+  summary      String // shown on card
+  description  String          @db.Text // full description, detail page
+  coverImageUrl String
+  category     ProjectCategory @default(WEB)
+  featured     Boolean         @default(false)
+  liveUrl      String?
+  githubUrl    String?
+  technologies String[] // chips shown on card, e.g. ["React","Node.js","PostgreSQL"]
+  keyFeatures  String[] // bullet list on detail page
+  techStackDetail Json? // structured breakdown, e.g. {"Frontend": "React, Tailwind", ...}
+  order        Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+// Experience & Education
+// ----------------------------------------------------------------------------
+
+model ExperienceEntry {
+  id          String   @id @default(cuid())
+  role        String
+  company     String
+  startLabel  String // "2026"
+  endLabel    String // "Present" | "2025"
+  bullets     String[]
+  icon        String?
+  colorToken  String? // node color token for timeline, e.g. "purple" | "blue" | "cyan"
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model EducationEntry {
+  id          String   @id @default(cuid())
+  title       String // "B.Tech Civil Engineering"
+  institution String // "NIT Kurukshetra"
+  startLabel  String
+  endLabel    String
+  description String?  @db.Text
+  featured    Boolean  @default(false) // e.g. featured academic project (canal-slope report)
+  coverImageUrl String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Blog
+// ----------------------------------------------------------------------------
+
+model BlogPost {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  excerpt       String
+  content       String   @db.Text // rich text (HTML or markdown) rendered on detail page
+  coverImageUrl String
+  publishedAt   DateTime @default(now())
+  readTimeLabel String? // "5 min read"
+  published     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+// Hobbies — fully dynamic field builder
+//
+// HobbyCard      -> top-level hobby ("Photography", "Book Reading", "PC Games")
+// HobbySubcollection -> grouping within a hobby ("Gallery", "Read", "Wishlist")
+// HobbyField     -> admin-defined field for a subcollection (name, type, required)
+// HobbyEntry     -> one item within a subcollection
+// HobbyEntryValue -> the value of a single field for a single entry
+//
+// The public site renders purely from this schema/config — no hardcoded
+// Photography/Books/Games logic anywhere in the frontend.
+// ----------------------------------------------------------------------------
+
+model HobbyCard {
+  id             String              @id @default(cuid())
+  slug           String              @unique
+  title          String
+  coverImageUrl  String
+  description    String?
+  order          Int                 @default(0)
+  createdAt      DateTime            @default(now())
+  subcollections HobbySubcollection[]
+}
+
+model HobbySubcollection {
+  id          String       @id @default(cuid())
+  hobbyCardId String
+  hobbyCard   HobbyCard    @relation(fields: [hobbyCardId], references: [id], onDelete: Cascade)
+  slug        String // unique within the hobby card, e.g. "read", "wishlist"
+  title       String // "Read", "Currently Reading", "Wishlist", "Gallery"
+  order       Int          @default(0)
+  fields      HobbyField[]
+  entries     HobbyEntry[]
+  createdAt   DateTime     @default(now())
+
+  @@unique([hobbyCardId, slug])
+}
+
+model HobbyField {
+  id               String              @id @default(cuid())
+  subcollectionId  String
+  subcollection    HobbySubcollection  @relation(fields: [subcollectionId], references: [id], onDelete: Cascade)
+  key              String // machine key, e.g. "cover_image", "title", "rating"
+  label            String // display label, e.g. "Cover Image"
+  inputType        FieldInputType
+  required         Boolean             @default(false)
+  order            Int                 @default(0)
+  options          String[] // for SELECT fields
+  values           HobbyEntryValue[]
+  createdAt        DateTime            @default(now())
+
+  @@unique([subcollectionId, key])
+}
+
+model HobbyEntry {
+  id              String             @id @default(cuid())
+  subcollectionId String
+  subcollection   HobbySubcollection @relation(fields: [subcollectionId], references: [id], onDelete: Cascade)
+  order           Int                @default(0)
+  values          HobbyEntryValue[]
+  createdAt       DateTime           @default(now())
+}
+
+model HobbyEntryValue {
+  id           String     @id @default(cuid())
+  entryId      String
+  entry        HobbyEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  fieldId      String
+  field        HobbyField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  value        String?    @db.Text // stringified value; images store Cloudinary URL
+  createdAt    DateTime   @default(now())
+
+  @@unique([entryId, fieldId])
+}
+
+// ----------------------------------------------------------------------------
+// Admin portal (defined here since it shares this schema; the admin prompt
+// extends these models further, e.g. adding roles/permissions).
+// ----------------------------------------------------------------------------
+
+model AdminUser {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime      @default(now())
+  otpRequests  OtpRequest[]
+}
+
+model OtpRequest {
+  id          String    @id @default(cuid())
+  adminUserId String?
+  adminUser   AdminUser? @relation(fields: [adminUserId], references: [id])
+  email       String
+  codeHash    String
+  purpose     String // "login" | "email_verification" | "password_reset"
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+/// Generic audit / draft log the admin portal can use for review-before-publish
+/// workflows on any of the content models above.
+model PendingChange {
+  id          String   @id @default(cuid())
+  modelName   String // e.g. "Project", "BlogPost"
+  recordId    String? // null when creating a new record
+  action      String // "create" | "update" | "delete"
+  payload     Json
+  submittedBy String?
+  status      String   @default("pending") // "pending" | "approved" | "rejected"
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+}
+
+// ----------------------------------------------------------------------------
+// Contact form is NOT stored in the DB per spec — it is emailed directly via
+// Resend / Brevo SMTP fallback from the /contact API route.
+// ----------------------------------------------------------------------------

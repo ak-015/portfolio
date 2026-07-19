@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Sora", sans-serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0a0e1a;
+  color: #e6e9f5;
+  background-image:
+    radial-gradient(circle at 15% 8%, rgba(139, 92, 246, 0.16) 0%, transparent 40%),
+    radial-gradient(circle at 85% 0%, rgba(59, 130, 246, 0.14) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.35);
+  color: #fff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0e1a;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a3358;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4578;
+}
+
+/* Reusable utility classes */
+.text-gradient {
+  background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-pill bg-gradient-brand px-6 py-3 text-sm font-semibold text-white shadow-glow transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98];
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-pill border border-bg-border bg-bg-card px-6 py-3 text-sm font-semibold text-white/90 transition-colors duration-200 hover:border-accent-purple/60 hover:bg-white/5;
+}
+
+.card {
+  @apply rounded-2xl border border-bg-border bg-bg-card transition-all duration-300;
+}
+
+.card-hover {
+  @apply hover:-translate-y-1 hover:border-accent-purple/50 hover:shadow-card;
+}
+
+.section-eyebrow {
+  @apply text-xs font-semibold uppercase tracking-[0.25em] text-accent-cyan/80;
+}
+
+.chip {
+  @apply rounded-md border border-bg-border bg-white/5 px-2.5 py-1 text-xs font-medium text-white/80;
+}
+
+.focus-ring {
+  @apply outline-none focus-visible:ring-2 focus-visible:ring-accent-purple focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
