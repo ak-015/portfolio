@@ -1,0 +1,380 @@
+// ═══════════════════════════════════════════════════════════════════════
+// SHARED SCHEMA — OWNED HERE (admin project)
+// ═══════════════════════════════════════════════════════════════════════
+// This is the single source of truth for the database. This is the ONLY
+// project that ever runs `prisma migrate`. The public project keeps a
+// synced, read-only copy of this exact file and only ever runs
+// `prisma generate` against it.
+//
+// Sync mechanism: copy-on-deploy — see README "Schema Sync". If you edit
+// a content model below, copy this file into the public repo's
+// prisma/schema.prisma before the public site's next deploy, or the two
+// apps will drift out of sync.
+//
+// Sections below are ordered: (1) shared content models — must stay
+// byte-identical to the public repo's copy — then (2) admin-only models
+// (auth, OTP, staged changes) which the public app never touches.
+// ═══════════════════════════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// (1) SHARED CONTENT MODELS — identical to the public repo's schema.prisma
+// ─────────────────────────────────────────────────────────────────────
+
+enum EducationStatus {
+  COMPLETED
+  IN_PROGRESS
+}
+
+enum TechCategory {
+  LANGUAGES
+  FRONTEND
+  BACKEND
+  DATABASE
+  TOOLS
+  MOBILE
+  OTHER
+}
+
+enum HobbyFieldType {
+  TEXT
+  TEXTAREA
+  IMAGE
+  DATE
+  TIME
+  DATETIME
+  NUMBER
+  RATING
+  URL
+  BOOLEAN
+}
+
+enum StatContext {
+  HOME
+  ABOUT
+  EXPERIENCE
+}
+
+model Profile {
+  id                 String   @id @default(cuid())
+  name               String
+  roles              String[]
+  tagline            String
+  profileImageUrl    String?
+  resumeUrl          String?
+  email              String
+  phone              String
+  education          String
+  location           String
+  languages          String
+  availabilityStatus String?
+  bookingLink        String?
+  mapLatitude        Float?
+  mapLongitude       Float?
+  mapLocationText    String?
+
+  aboutHeadlinePrefix String?
+  aboutHeadlineWord1  String?
+  aboutHeadlineMiddle String?
+  aboutHeadlineWord2  String?
+  aboutIntro          String?
+  positioningCopy     String?
+
+  footerTagline String?
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+model SocialLink {
+  id       String  @id @default(cuid())
+  platform String
+  url      String
+  icon     String
+  order    Int     @default(0)
+  visible  Boolean @default(true)
+}
+
+model QuickLink {
+  id      String @id @default(cuid())
+  label   String
+  href    String
+  order   Int    @default(0)
+  section String @default("quick") // "quick" | "services"
+}
+
+model Stat {
+  id      String      @id @default(cuid())
+  context StatContext
+  label   String
+  value   String
+  icon    String
+  order   Int         @default(0)
+}
+
+model ServiceItem {
+  id          String @id @default(cuid())
+  title       String
+  description String
+  icon        String
+  order       Int    @default(0)
+}
+
+model Technology {
+  id       String       @id @default(cuid())
+  name     String       @unique
+  icon     String
+  category TechCategory
+  order    Int          @default(0)
+
+  projects ProjectTechnology[]
+}
+
+model ProjectCategory {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  order Int    @default(0)
+
+  projects Project[]
+}
+
+model Project {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  summary       String
+  description   String
+  coverImageUrl String?
+  liveDemoUrl   String?
+  githubUrl     String?
+  featured      Boolean  @default(false)
+  order         Int      @default(0)
+
+  categoryId String
+  category   ProjectCategory @relation(fields: [categoryId], references: [id])
+
+  features     ProjectFeature[]
+  technologies ProjectTechnology[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProjectFeature {
+  id        String  @id @default(cuid())
+  text      String
+  order     Int     @default(0)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectTechnology {
+  id           String     @id @default(cuid())
+  projectId    String
+  technologyId String
+  order        Int        @default(0)
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  technology   Technology @relation(fields: [technologyId], references: [id])
+
+  @@unique([projectId, technologyId])
+}
+
+model Experience {
+  id        String  @id @default(cuid())
+  role      String
+  company   String
+  startDate String
+  endDate   String?
+  color     String?
+  icon      String?
+  order     Int     @default(0)
+
+  bullets ExperienceBullet[]
+}
+
+model ExperienceBullet {
+  id           String     @id @default(cuid())
+  text         String
+  order        Int        @default(0)
+  experienceId String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+}
+
+model EducationEntry {
+  id              String          @id @default(cuid())
+  degree          String
+  institution     String
+  startDate       String
+  endDate         String
+  description     String?
+  status          EducationStatus @default(COMPLETED)
+  gpaOrPercentage String?
+  order           Int             @default(0)
+}
+
+model KeySubject {
+  id    String @id @default(cuid())
+  name  String
+  order Int    @default(0)
+}
+
+model Achievement {
+  id          String @id @default(cuid())
+  icon        String
+  title       String
+  description String
+  order       Int    @default(0)
+}
+
+model Certificate {
+  id       String @id @default(cuid())
+  title    String
+  imageUrl String
+  order    Int    @default(0)
+}
+
+model BlogPost {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  coverImageUrl String?
+  excerpt       String?
+  contentHtml   String
+  liveDemoUrl   String?
+  githubUrl     String?
+  publishedAt   DateTime @default(now())
+  order         Int      @default(0)
+
+  tags BlogPostTag[]
+}
+
+model BlogPostTag {
+  id         String   @id @default(cuid())
+  label      String
+  order      Int      @default(0)
+  blogPostId String
+  blogPost   BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+}
+
+model Hobby {
+  id            String  @id @default(cuid())
+  name          String
+  slug          String  @unique
+  coverImageUrl String?
+  order         Int     @default(0)
+
+  subCollections HobbySubCollection[]
+}
+
+model HobbySubCollection {
+  id      String @id @default(cuid())
+  name    String
+  order   Int    @default(0)
+  hobbyId String
+  hobby   Hobby  @relation(fields: [hobbyId], references: [id], onDelete: Cascade)
+
+  fields  HobbyField[]
+  entries HobbyEntry[]
+}
+
+model HobbyField {
+  id              String             @id @default(cuid())
+  name            String
+  fieldType       HobbyFieldType
+  required        Boolean            @default(false)
+  order           Int                @default(0)
+  subCollectionId String
+  subCollection   HobbySubCollection @relation(fields: [subCollectionId], references: [id], onDelete: Cascade)
+
+  values HobbyEntryValue[]
+}
+
+model HobbyEntry {
+  id              String             @id @default(cuid())
+  order           Int                @default(0)
+  subCollectionId String
+  subCollection   HobbySubCollection @relation(fields: [subCollectionId], references: [id], onDelete: Cascade)
+  createdAt       DateTime           @default(now())
+
+  values HobbyEntryValue[]
+}
+
+model HobbyEntryValue {
+  id      String     @id @default(cuid())
+  value   String
+  fieldId String
+  field   HobbyField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  entryId String
+  entry   HobbyEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@unique([fieldId, entryId])
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// (2) ADMIN-ONLY MODELS — the public project never reads or writes these
+// ─────────────────────────────────────────────────────────────────────
+
+enum OtpPurpose {
+  LOGIN
+  STAGING
+}
+
+enum PendingAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  otpRequests    OtpRequest[]
+  pendingChanges PendingChange[]
+}
+
+model OtpRequest {
+  id          String     @id @default(cuid())
+  purpose     OtpPurpose
+  section     String? // set when purpose = STAGING — identifies which section/batch this OTP confirms
+  codeHash    String
+  expiresAt   DateTime
+  attempts    Int        @default(0)
+  lockedUntil DateTime?
+  consumedAt  DateTime?
+  createdAt   DateTime   @default(now())
+
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, purpose, section])
+}
+
+// One row per staged edit. A whole section's pending rows are applied
+// atomically (single $transaction) the moment its batch OTP is verified.
+model PendingChange {
+  id        String        @id @default(cuid())
+  section   String // groups changes for one "Send OTP" batch, e.g. "profile", "projects", "hobby:photography"
+  model     String // logical resource key, e.g. "project", "experience", "hobbyEntry" — see lib/sectionRegistry.ts
+  action    PendingAction
+  targetId  String? // existing record id for UPDATE/DELETE; null for CREATE
+  label     String // human-readable summary shown in the staging UI
+  payload   Json? // full nested payload for CREATE/UPDATE; null for DELETE
+  createdAt DateTime      @default(now())
+
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([section])
+}
