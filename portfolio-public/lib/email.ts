@@ -1,7 +1,6 @@
 import { Resend } from "resend";
-import nodemailer from "nodemailer";
 
-// Primary: Resend. Fallback: Brevo SMTP. Used only by the /contact form —
+// Primary: Resend. Fallback: Brevo API. Used only by the /contact form —
 // messages are relayed by email and are never written to the database.
 
 export async function sendContactEmail(payload: {
@@ -28,52 +27,89 @@ export async function sendContactEmail(payload: {
       const { error } = await resend.emails.send({
         from: "Portfolio Contact <contact@resend.dev>",
         to,
-        reply_to: payload.email,
+        replyTo: payload.email,
         subject: `[Portfolio] ${payload.subject}`,
         html,
       });
       if (!error) return { provider: "resend" as const };
-      console.error("Resend failed, falling back to Brevo SMTP:", error);
+      console.error("Resend failed, falling back to Brevo API:", error);
     } catch (err) {
-      console.error("Resend threw, falling back to Brevo SMTP:", err);
+      console.error("Resend threw, falling back to Brevo API:", err);
     }
   }
 
+  // Fallback: Brevo (Sendinblue) Transactional Email API v3
   const brevoFrom = process.env.BREVO_FROM_EMAIL;
   if (!brevoFrom) {
     throw new Error(
-      "BREVO_FROM_EMAIL is not set. BREVO_SMTP_USER is your SMTP login and " +
-        "is NOT a valid From address — Brevo rejects sends where From " +
-        "isn't a verified sender. Set BREVO_FROM_EMAIL to a sender " +
-        "verified in Brevo under Senders, Domains & Dedicated IPs."
+      "BREVO_FROM_EMAIL is not set. This must be a sender email verified " +
+      "in your Brevo account (Senders, Domains & Dedicated IPs → Senders)."
+    );
+  }
+  const brevoApiKey = process.env.BREVO_API_KEY || process.env.BREVO_SMTP_PASS;
+  if (!brevoApiKey) {
+    throw new Error(
+      "Neither BREVO_API_KEY nor BREVO_SMTP_PASS is set. Set BREVO_API_KEY " +
+      "to your Brevo API v3 key (starts with xkeysib-)."
     );
   }
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.BREVO_SMTP_HOST,
-    port: Number(process.env.BREVO_SMTP_PORT ?? 587),
-    secure: false,
-    auth: {
-      user: process.env.BREVO_SMTP_USER,
-      pass: process.env.BREVO_SMTP_PASS,
-    },
-  });
+  // If using the old SMTP key (xsmtpsib- prefix), warn the user they need an
+  // API v3 key (xkeysib- prefix) generated from the Brevo dashboard.
+  if (brevoApiKey.startsWith("xsmtpsib-")) {
+    throw new Error(
+      "SMTP key (xsmtpsib-) cannot be used with the Brevo API. " +
+      "Generate a Brevo API v3 key (xkeysib-) from " +
+      "https://app.brevo.com/settings/keys/api and set it as BREVO_API_KEY in your .env."
+    );
+  }
 
-  await transporter.sendMail({
-    from: `"Portfolio Contact" <${brevoFrom}>`,
-    to,
-    replyTo: payload.email,
-    subject: `[Portfolio] ${payload.subject}`,
-    html,
-  });
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": brevoApiKey,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender: { email: brevoFrom, name: "Portfolio Contact" },
+        to: [{ email: to }],
+        replyTo: { email: payload.email },
+        subject: `[Portfolio] ${payload.subject}`,
+        htmlContent: html,
+      }),
+    });
 
-  return { provider: "brevo" as const };
+    if (!response.ok) {
+      const errorBody = await response.text();
+      let parsed: any;
+      try {
+        parsed = JSON.parse(errorBody);
+      } catch {
+        parsed = { message: errorBody };
+      }
+      const message = parsed?.message || parsed?.code || response.statusText;
+      console.error("Brevo API error response:", parsed);
+      throw new Error("Brevo API responded with " + response.status + ": " + message);
+    }
+
+    const result = await response.json();
+    console.log("Brevo email sent successfully. Message ID:", result.messageId);
+    return { provider: "brevo" as const };
+  } catch (err: any) {
+    if (err?.message?.includes("Brevo API responded")) {
+      throw err;
+    }
+    console.error("Brevo API send failed with full error:", err);
+    throw new Error("Brevo API failed: " + (err?.message || String(err)));
+  }
 }
 
 function escapeHtml(input: string) {
   return input
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, "&#34;");
 }
