@@ -10,7 +10,7 @@ export default function HobbyGrid({ hobbies }: { hobbies: Hobby[] }) {
     <div>
       <h2 className="mb-1 text-2xl font-bold text-white">My Hobbies</h2>
       <p className="mb-6 text-sm text-muted">Things I enjoy</p>
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 xl:grid-cols-4 xl:gap-6">
         {hobbies.map((h) => (
           <Link
             key={h.id}

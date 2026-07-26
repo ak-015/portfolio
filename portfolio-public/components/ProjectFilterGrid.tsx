@@ -47,7 +47,7 @@ export default function ProjectFilterGrid({
       {filtered.length === 0 ? (
         <p className="text-center text-muted">No projects in this category yet.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6">
           {filtered.map((p) => (
             <ProjectCard key={p.id} project={p} />
           ))}

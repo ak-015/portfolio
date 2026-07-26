@@ -13,9 +13,9 @@ export default async function EducationPage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-14">
+    <div className="mx-auto max-w-7xl px-6 py-14 xl:max-w-full xl:px-14 2xl:px-20 xl:py-20">
       <EducationSection entries={entries} keySubjects={keySubjects} achievements={achievements} />
-      <div className="mt-14">
+      <div className="mt-14 xl:mt-20">
         <CertificateGrid certificates={certificates} />
       </div>
     </div>

@@ -22,8 +22,8 @@ export default async function ContactPage() {
       : "#";
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-14">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+    <div className="mx-auto max-w-7xl px-6 py-14 xl:max-w-full xl:px-14 2xl:px-20 xl:py-20">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 xl:gap-8">
         <div>
           <h1 className="mb-1 text-2xl font-bold text-white">Contact Me</h1>
           <p className="mb-6 text-sm text-muted">Let&apos;s work together</p>

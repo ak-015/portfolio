@@ -75,6 +75,13 @@ export default function Footer({
           </ul>
         </div>
       </div>
+
+      {/* Bottom bar with trademark */}
+      <div className="border-t border-border/40 px-6 py-4">
+        <p className="text-center text-xs text-muted/60">
+          &copy; {new Date().getFullYear()} {name}. All rights reserved.
+        </p>
+      </div>
     </footer>
   );
 }

@@ -25,7 +25,7 @@ export default function TechStackGrid({ technologies }: { technologies: Tech[] }
     <div className="rounded-2xl border border-border bg-panel/60 p-6">
       <h2 className="text-2xl font-bold text-white">My Tech Stack</h2>
       <p className="mb-6 text-sm text-muted">Technologies I work with</p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:gap-4">
         {categories.map((cat) => (
           <div key={cat} className="rounded-xl border border-border bg-panel2 p-4">
             <p className="mb-3 text-sm font-medium text-white/90">

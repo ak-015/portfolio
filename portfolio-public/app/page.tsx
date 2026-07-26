@@ -47,29 +47,39 @@ export default async function HomePage() {
         socials={socials}
       />
 
-      <section className="mx-auto -mt-6 max-w-7xl px-6">
+      <section className="mx-auto -mt-6 max-w-7xl px-6 xl:max-w-full xl:px-14 2xl:px-20">
         <StatStrip stats={stats} />
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <h2 className="text-2xl font-bold text-white">Featured Projects</h2>
-        <p className="mb-8 text-sm text-muted">some things I have built</p>
+      <section className="mx-auto max-w-7xl px-6 py-16 xl:max-w-full xl:px-14 2xl:px-20 xl:py-20">
+        <div className="mb-8 flex items-center justify-between xl:mb-10">
+          <div>
+            <h2 className="text-2xl font-bold text-white xl:text-3xl">Featured Projects</h2>
+            <p className="mt-1 text-sm text-muted">some things I have built</p>
+          </div>
+          <Link href="/projects" className="text-sm text-accentBlue hover:underline xl:text-base">
+            View all →
+          </Link>
+        </div>
         <ProjectFilterGrid projects={projectsForGrid} categories={categories} />
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 pb-16">
+      <section className="mx-auto max-w-7xl px-6 pb-16 xl:max-w-full xl:px-14 2xl:px-20 xl:pb-20">
         <ServicesGrid services={services} />
       </section>
 
       {posts.length > 0 ? (
-        <section className="mx-auto max-w-7xl px-6 pb-20">
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Latest Blog</h2>
-            <Link href="/blogs" className="text-sm text-accentBlue hover:underline">
-              View all
+        <section className="mx-auto max-w-7xl px-6 pb-20 xl:max-w-full xl:px-14 2xl:px-20 xl:pb-24">
+          <div className="mb-8 flex items-center justify-between xl:mb-10">
+            <div>
+              <h2 className="text-2xl font-bold text-white xl:text-3xl">Latest Blog</h2>
+              <p className="mt-1 text-sm text-muted">thoughts and insights</p>
+            </div>
+            <Link href="/blogs" className="text-sm text-accentBlue hover:underline xl:text-base">
+              View all →
             </Link>
           </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 xl:gap-6">
             {posts.map((post) => (
               <BlogCard key={post.id} post={post} />
             ))}

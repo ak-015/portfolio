@@ -8,7 +8,7 @@ export default function CertificateGrid({ certificates }: { certificates: Certif
   return (
     <div>
       <h2 className="mb-6 text-2xl font-bold text-white">Certificates</h2>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6">
         {certificates.map((c) => (
           <div key={c.id} className="overflow-hidden rounded-2xl border border-border bg-panel">
             <div className="relative h-44 w-full bg-panel2">

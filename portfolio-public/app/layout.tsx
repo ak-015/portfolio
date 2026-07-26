@@ -13,6 +13,10 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: process.env.NEXT_PUBLIC_SITE_URL
       ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
       : undefined,
+    icons: {
+      icon: "/logo.svg",
+      shortcut: "/logo.svg",
+    },
   };
 }
 

@@ -8,7 +8,7 @@ export default function ServicesGrid({ services }: { services: ServiceItem[] }) 
     <div className="rounded-2xl border border-border bg-panel/60 p-6">
       <h2 className="text-2xl font-bold text-white">What I Do</h2>
       <p className="mb-6 text-sm text-muted">Services I offer</p>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 xl:gap-4">
         {services.map((s) => (
           <div
             key={s.id}

@@ -21,7 +21,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   if (!project) notFound();
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-14">
+    <div className="mx-auto max-w-7xl px-6 py-14 xl:px-8 xl:py-20">
       <h1 className="mb-8 text-3xl font-bold text-white">{project.title}</h1>
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
