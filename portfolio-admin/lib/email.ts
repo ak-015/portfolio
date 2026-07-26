@@ -43,8 +43,25 @@ export async function sendOtpEmail(to: string, code: string, context: string) {
     auth: { user: process.env.BREVO_SMTP_USER, pass: process.env.BREVO_SMTP_PASS },
   });
 
-  await transporter.sendMail({ from: `"Portfolio Admin" <${brevoFrom}>`, to, subject, html });
-  return { provider: "brevo" as const };
+  try {
+    const info = await transporter.sendMail({ from: `"Portfolio Admin" <${brevoFrom}>`, to, subject, html });
+    console.log("Brevo email sent successfully. Message ID:", info.messageId);
+    return { provider: "brevo" as const };
+  } catch (err: any) {
+    console.error("Brevo SMTP send failed with full error:", err);
+    // Provide a more helpful error message based on common Brevo issues
+    const msg = err?.message || String(err);
+    if (msg.includes("from") || msg.includes("sender") || msg.includes("554") || msg.includes("5.1.8")) {
+      throw new Error(
+        `Brevo rejected the email because "${brevoFrom}" is not a verified sender. ` +
+        `Log in to your Brevo account → Senders, Domains & Dedicated IPs → Senders, ` +
+        `and verify this email address, or use the auto-issued sender address ` +
+        `(e.g. xxxxx@<id>.brevosend.com) that Brevo provides. ` +
+        `Raw error: ${msg}`
+      );
+    }
+    throw new Error(`Brevo SMTP failed: ${msg}`);
+  }
 }
 
 function escapeHtml(input: string) {

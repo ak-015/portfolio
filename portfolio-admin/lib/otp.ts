@@ -50,7 +50,16 @@ export async function createAndSendOtp(opts: {
     },
   });
 
-  await sendOtpEmail(opts.adminEmail, code, opts.context);
+  try {
+    await sendOtpEmail(opts.adminEmail, code, opts.context);
+  } catch (err) {
+    // Email failed — clean up the OTP record so stale codes don't accumulate
+    await prisma.otpRequest.update({
+      where: { id: request.id },
+      data: { consumedAt: new Date() },
+    });
+    throw err;
+  }
 
   return { otpRequestId: request.id, expiresAt };
 }
