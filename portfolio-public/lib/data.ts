@@ -7,14 +7,42 @@ import { prisma } from "@/lib/prisma";
 
 export const getProfile = () => prisma.profile.findFirst();
 
+// Falls back to visible=true if the row is somehow missing (fresh DB
+// before the seed/first admin save) — fail open rather than hiding a
+// section nobody asked to hide.
+export const getSiteSettings = async () => {
+  const settings = await prisma.siteSettings.findUnique({ where: { id: "singleton" } });
+  return settings ?? { id: "singleton", experienceVisible: true };
+};
+
 export const getSocialLinks = () =>
   prisma.socialLink.findMany({ where: { visible: true }, orderBy: { order: "asc" } });
 
 export const getQuickLinks = (section: "quick" | "services") =>
   prisma.quickLink.findMany({ where: { section }, orderBy: { order: "asc" } });
 
-export const getStats = (context: "HOME" | "ABOUT" | "EXPERIENCE") =>
-  prisma.stat.findMany({ where: { context }, orderBy: { order: "asc" } });
+// Stats whose `source` isn't MANUAL show a live count from the matching
+// table instead of the stored `value`, unless the admin has explicitly
+// enabled overrideEnabled to force custom text (see Stat model comment).
+// This keeps e.g. "Projects Completed" in sync automatically whenever a
+// project is added/removed, rather than drifting from a hand-typed number.
+export async function getStats(context: "HOME" | "ABOUT" | "EXPERIENCE") {
+  const stats = await prisma.stat.findMany({ where: { context }, orderBy: { order: "asc" } });
+
+  const needsCount = stats.some((s) => s.source !== "MANUAL" && !s.overrideEnabled);
+  const counts = needsCount
+    ? {
+        PROJECTS: await prisma.project.count(),
+        TECHNOLOGIES: await prisma.technology.count(),
+        CERTIFICATES: await prisma.certificate.count(),
+      }
+    : null;
+
+  return stats.map((s) => {
+    if (s.source === "MANUAL" || s.overrideEnabled) return s;
+    return { ...s, value: String(counts![s.source as "PROJECTS" | "TECHNOLOGIES" | "CERTIFICATES"]) };
+  });
+}
 
 export const getServices = () => prisma.serviceItem.findMany({ orderBy: { order: "asc" } });
 

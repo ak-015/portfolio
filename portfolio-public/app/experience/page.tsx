@@ -1,9 +1,13 @@
+import { notFound } from "next/navigation";
 import ExperienceTimeline from "@/components/ExperienceTimeline";
-import { getExperiences, getStats } from "@/lib/data";
+import { getExperiences, getStats, getSiteSettings } from "@/lib/data";
 
 export const metadata = { title: "Experience" };
 
 export default async function ExperiencePage() {
+  const settings = await getSiteSettings();
+  if (!settings.experienceVisible) notFound();
+
   const [experiences, stats] = await Promise.all([getExperiences(), getStats("EXPERIENCE")]);
 
   return (

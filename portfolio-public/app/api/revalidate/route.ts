@@ -9,6 +9,11 @@ import { z } from "zod";
 
 const schema = z.object({
   paths: z.array(z.string().min(1)).min(1).max(50),
+  // "layout": bust every route sharing that path's layout — used when a
+  // change affects something rendered site-wide (e.g. the navbar, after
+  // toggling a section's visibility), where enumerating every individual
+  // page path isn't practical.
+  mode: z.enum(["page", "layout"]).default("page"),
 });
 
 export async function POST(req: NextRequest) {
@@ -37,12 +42,12 @@ export async function POST(req: NextRequest) {
     // attacker-controlled external URL.
     if (!path.startsWith("/")) continue;
     try {
-      revalidatePath(path);
+      revalidatePath(path, parsed.data.mode === "layout" ? "layout" : undefined);
       revalidated.push(path);
     } catch (err) {
       console.error(`Failed to revalidate path "${path}":`, err);
     }
   }
 
-  return NextResponse.json({ ok: true, revalidated });
+  return NextResponse.json({ ok: true, revalidated, mode: parsed.data.mode });
 }

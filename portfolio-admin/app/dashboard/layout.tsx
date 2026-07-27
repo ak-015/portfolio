@@ -12,6 +12,7 @@ const NAV_GROUPS: { title: string; items: { href: string; label: string }[] }[] 
       { href: "/dashboard/quick-links", label: "Footer Links" },
       { href: "/dashboard/stats", label: "Stat Strips" },
       { href: "/dashboard/services", label: "Services" },
+      { href: "/dashboard/settings", label: "Site Settings" },
     ],
   },
   {

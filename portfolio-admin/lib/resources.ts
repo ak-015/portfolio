@@ -13,6 +13,7 @@ export type ResourceField = {
   type: FieldType;
   required?: boolean;
   options?: { value: string; label: string }[]; // for "select"
+  helpText?: string; // short explanatory note shown under the field
 };
 
 export type ResourceConfig = {
@@ -86,11 +87,35 @@ export const RESOURCES: Record<string, ResourceConfig> = {
         ],
       },
       { name: "label", label: "Label", type: "text", required: true },
-      { name: "value", label: "Value", type: "text", required: true },
+      {
+        name: "source",
+        label: "Data source",
+        type: "select",
+        required: true,
+        options: [
+          { value: "MANUAL", label: "Manual — use the Value below" },
+          { value: "PROJECTS", label: "Live — Project count" },
+          { value: "TECHNOLOGIES", label: "Live — Technology count" },
+          { value: "CERTIFICATES", label: "Live — Certificate count" },
+        ],
+      },
+      {
+        name: "overrideEnabled",
+        label: "Override live value with the Value below",
+        type: "boolean",
+        helpText: "Only applies when Data source isn't Manual. Ignored for Manual stats (they always use Value).",
+      },
+      {
+        name: "value",
+        label: "Value",
+        type: "text",
+        required: true,
+        helpText: "Used directly for Manual stats. For live stats, only shown if Override is on above — otherwise it's replaced by the real count on the public site.",
+      },
       { name: "icon", label: "Icon", type: "icon", required: true },
       { name: "order", label: "Order", type: "number" },
     ],
-    listColumns: ["context", "label", "value", "order"],
+    listColumns: ["context", "label", "source", "value", "order"],
     orderable: true,
   },
   services: {

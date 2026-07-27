@@ -63,6 +63,17 @@ enum StatContext {
   EXPERIENCE
 }
 
+// MANUAL: `value` is admin-typed free text ("50+", "100%", etc).
+// PROJECTS / TECHNOLOGIES / CERTIFICATES: `value` is computed at read time
+// on the public site from the live row count of the matching table, unless
+// overrideEnabled is set — then `value` is shown as typed instead.
+enum StatSource {
+  MANUAL
+  PROJECTS
+  TECHNOLOGIES
+  CERTIFICATES
+}
+
 model Profile {
   id                 String   @id @default(cuid())
   name               String
@@ -115,9 +126,19 @@ model Stat {
   id      String      @id @default(cuid())
   context StatContext
   label   String
-  value   String
+  value   String // manual value, OR the override text shown when overrideEnabled=true
   icon    String
   order   Int         @default(0)
+
+  source          StatSource @default(MANUAL)
+  overrideEnabled Boolean    @default(false) // when source != MANUAL, show `value` instead of the live count
+}
+
+// Singleton — one row, id fixed to "singleton". Site-wide toggles that
+// don't belong to any single content model.
+model SiteSettings {
+  id                String  @id @default("singleton")
+  experienceVisible Boolean @default(true)
 }
 
 model ServiceItem {

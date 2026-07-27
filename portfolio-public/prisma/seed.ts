@@ -1,4 +1,4 @@
-import { PrismaClient, EducationStatus, TechCategory, HobbyFieldType, StatContext } from "@prisma/client";
+import { PrismaClient, EducationStatus, TechCategory, HobbyFieldType, StatContext, StatSource } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -63,26 +63,37 @@ async function main() {
   });
 
   // ── Stats ─────────────────────────────────────────────────────────
+  // Projects / Technologies / Certificates stats show the live row count
+  // of their matching table (see lib/data.ts getStats) — `value` below is
+  // only the seeded placeholder shown until the first real read, and
+  // becomes the override text if the admin ever enables overrideEnabled.
   await prisma.stat.deleteMany();
   await prisma.stat.createMany({
     data: [
-      { context: StatContext.HOME, label: "Projects Completed", value: "50+", icon: "MdArticle", order: 0 },
-      { context: StatContext.HOME, label: "Technologies", value: "20+", icon: "MdBuild", order: 1 },
+      { context: StatContext.HOME, label: "Projects Completed", value: "50+", icon: "MdArticle", order: 0, source: StatSource.PROJECTS },
+      { context: StatContext.HOME, label: "Technologies", value: "20+", icon: "MdBuild", order: 1, source: StatSource.TECHNOLOGIES },
       { context: StatContext.HOME, label: "Years Experience", value: "2+", icon: "MdCalendarToday", order: 2 },
-      { context: StatContext.HOME, label: "Major Certifications", value: "10+", icon: "MdVerified", order: 3 },
+      { context: StatContext.HOME, label: "Major Certifications", value: "10+", icon: "MdVerified", order: 3, source: StatSource.CERTIFICATES },
       { context: StatContext.HOME, label: "Dedication", value: "100%", icon: "MdEmojiEvents", order: 4 },
 
       { context: StatContext.ABOUT, label: "Years Experience", value: "2+", icon: "MdCalendarToday", order: 0 },
-      { context: StatContext.ABOUT, label: "Projects", value: "50+", icon: "MdArticle", order: 1 },
-      { context: StatContext.ABOUT, label: "Technologies", value: "20+", icon: "MdBuild", order: 2 },
-      { context: StatContext.ABOUT, label: "Certificates", value: "15+", icon: "MdVerified", order: 3 },
+      { context: StatContext.ABOUT, label: "Projects", value: "50+", icon: "MdArticle", order: 1, source: StatSource.PROJECTS },
+      { context: StatContext.ABOUT, label: "Technologies", value: "20+", icon: "MdBuild", order: 2, source: StatSource.TECHNOLOGIES },
+      { context: StatContext.ABOUT, label: "Certificates", value: "15+", icon: "MdVerified", order: 3, source: StatSource.CERTIFICATES },
 
       { context: StatContext.EXPERIENCE, label: "Years Experience", value: "2+", icon: "FaBriefcase", order: 0 },
-      { context: StatContext.EXPERIENCE, label: "Projects Completed", value: "50+", icon: "MdArticle", order: 1 },
-      { context: StatContext.EXPERIENCE, label: "Technologies", value: "20+", icon: "MdBuild", order: 2 },
+      { context: StatContext.EXPERIENCE, label: "Projects Completed", value: "50+", icon: "MdArticle", order: 1, source: StatSource.PROJECTS },
+      { context: StatContext.EXPERIENCE, label: "Technologies", value: "20+", icon: "MdBuild", order: 2, source: StatSource.TECHNOLOGIES },
       { context: StatContext.EXPERIENCE, label: "Happy Clients", value: "15+", icon: "FaUserTie", order: 3 },
-      { context: StatContext.EXPERIENCE, label: "Certifications", value: "10+", icon: "MdVerified", order: 4 },
+      { context: StatContext.EXPERIENCE, label: "Certifications", value: "10+", icon: "MdVerified", order: 4, source: StatSource.CERTIFICATES },
     ],
+  });
+
+  // ── Site settings (singleton) ───────────────────────────────────────
+  await prisma.siteSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton", experienceVisible: true },
   });
 
   // ── Services ─────────────────────────────────────────────────────

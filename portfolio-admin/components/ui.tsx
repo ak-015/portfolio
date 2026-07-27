@@ -48,13 +48,24 @@ export function Button({
   );
 }
 
-export function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+export function Field({
+  label,
+  required,
+  help,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  help?: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-medium text-muted">
         {label} {required ? <span className="text-danger">*</span> : null}
       </span>
       {children}
+      {help ? <span className="mt-1 block text-xs text-muted/70">{help}</span> : null}
     </label>
   );
 }

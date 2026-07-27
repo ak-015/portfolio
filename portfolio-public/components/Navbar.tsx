@@ -19,12 +19,15 @@ const NAV_ITEMS = [
 export default function Navbar({
   name,
   resumeUrl,
+  hideExperience = false,
 }: {
   name: string;
   resumeUrl?: string | null;
+  hideExperience?: boolean;
 }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const navItems = hideExperience ? NAV_ITEMS.filter((item) => item.href !== "/experience") : NAV_ITEMS;
   const initials = name
     .split(" ")
     .map((p) => p[0])
@@ -48,7 +51,7 @@ export default function Navbar({
 
         {/* Desktop nav */}
         <ul className="hidden items-center gap-7 md:flex">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
@@ -93,7 +96,7 @@ export default function Navbar({
       {menuOpen && (
         <div className="border-t border-border/60 bg-bg/95 backdrop-blur md:hidden">
           <ul className="space-y-1 px-6 py-4">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}

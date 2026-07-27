@@ -43,6 +43,8 @@ export async function applyPendingChange(
       return applyHobbyField(tx, action, targetId, payload);
     case "hobbyEntry":
       return applyHobbyEntry(tx, action, targetId, payload);
+    case "siteSettings":
+      return applySiteSettings(tx, payload);
     default:
       throw new Error(`No apply handler registered for model "${model}"`);
   }
@@ -54,6 +56,15 @@ async function applyProfile(tx: Tx, action: string, payload: any) {
   const existing = await tx.profile.findFirst();
   if (existing) return tx.profile.update({ where: { id: existing.id }, data: payload });
   return tx.profile.create({ data: payload });
+}
+
+// ── Site settings (singleton, fixed id) ──────────────────────────
+async function applySiteSettings(tx: Tx, payload: any) {
+  return tx.siteSettings.upsert({
+    where: { id: "singleton" },
+    update: payload,
+    create: { id: "singleton", ...payload },
+  });
 }
 
 // ── Project (+ features, + technology links) ─────────────────────

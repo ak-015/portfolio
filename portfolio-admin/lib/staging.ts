@@ -6,19 +6,27 @@ import { PendingAction, Prisma } from "@prisma/client";
 // Which public routes a given section's confirmed changes can affect.
 // Kept intentionally coarse (a few sections just revalidate everything)
 // since over-revalidating is harmless and the public site is read-mostly.
+//
+// projects / technologies / certificates also feed the live-computed stat
+// tiles on Home, About, and Experience (see portfolio-public's getStats),
+// so those three pages are included even though their own content lives
+// elsewhere.
 const SECTION_PATHS: Record<string, string[]> = {
   profile: ["/", "/about", "/contact"],
   "social-links": ["/", "/about", "/contact"],
   "quick-links": ["/", "/about", "/projects", "/experience", "/education", "/blogs", "/contact"],
   stats: ["/", "/about", "/experience"],
   services: ["/"],
-  technologies: ["/", "/about", "/projects"],
+  technologies: ["/", "/about", "/experience", "/projects"],
   "project-categories": ["/", "/projects"],
-  projects: ["/", "/projects"],
+  projects: ["/", "/about", "/experience", "/projects"],
   experience: ["/experience"],
   education: ["/education"],
-  certificates: ["/education"],
+  certificates: ["/", "/about", "/experience", "/education"],
   blog: ["/", "/blogs"],
+  // Revalidated with mode "layout" in commitSection — "/" here is just
+  // the entry point Next needs; layout mode busts every route under it.
+  settings: ["/"],
 };
 
 function sectionPaths(section: string): string[] {
@@ -93,6 +101,11 @@ export async function commitSection(section: string) {
     await tx.pendingChange.deleteMany({ where: { section } });
   });
 
-  await triggerPublicRevalidate(sectionPaths(section));
+  // "settings" changes (e.g. Experience section visibility) affect the
+  // navbar/footer rendered in the root layout on every page — bust the
+  // whole site's layout cache rather than trying to enumerate every route.
+  await triggerPublicRevalidate(sectionPaths(section), {
+    mode: section === "settings" ? "layout" : "page",
+  });
   return { applied: changes.length };
 }

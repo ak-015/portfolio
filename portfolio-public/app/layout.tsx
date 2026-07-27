@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getProfile, getSocialLinks, getQuickLinks } from "@/lib/data";
+import { getProfile, getSocialLinks, getQuickLinks, getSiteSettings } from "@/lib/data";
 
 export async function generateMetadata(): Promise<Metadata> {
   const profile = await getProfile();
@@ -21,24 +21,32 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [profile, socials, quickLinks, serviceLinks] = await Promise.all([
+  const [profile, socials, quickLinks, serviceLinks, settings] = await Promise.all([
     getProfile(),
     getSocialLinks(),
     getQuickLinks("quick"),
     getQuickLinks("services"),
+    getSiteSettings(),
   ]);
 
   const name = profile?.name ?? "Portfolio";
 
+  // Admin-controlled Experience section toggle (Dashboard → Settings):
+  // strip the footer's Experience quick link too so the two never
+  // disagree — the /experience route itself 404s independently.
+  const visibleQuickLinks = settings.experienceVisible
+    ? quickLinks
+    : quickLinks.filter((l) => l.href !== "/experience");
+
   return (
     <html lang="en">
       <body className="antialiased">
-        <Navbar name={name} resumeUrl={profile?.resumeUrl} />
+        <Navbar name={name} resumeUrl={profile?.resumeUrl} hideExperience={!settings.experienceVisible} />
         <main>{children}</main>
         <Footer
           name={name}
           tagline={profile?.footerTagline}
-          quickLinks={quickLinks}
+          quickLinks={visibleQuickLinks}
           serviceLinks={serviceLinks}
           socials={socials}
         />

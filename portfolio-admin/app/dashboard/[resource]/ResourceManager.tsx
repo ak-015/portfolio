@@ -221,7 +221,7 @@ export default function ResourceManager({ config, initialRows }: { config: Resou
             </h2>
             <div className="space-y-4">
               {config.fields.map((f) => (
-                <Field key={f.name} label={f.label} required={f.required}>
+                <Field key={f.name} label={f.label} required={f.required} help={f.helpText}>
                   {f.type === "textarea" ? (
                     <Textarea
                       rows={3}
