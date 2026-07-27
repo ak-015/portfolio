@@ -2,6 +2,18 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import LogoutButton from "./LogoutButton";
 
+// Every /dashboard/* page reads live data straight from Prisma in a server
+// component. Next.js only treats a route as dynamic when it detects a
+// dynamic API (cookies(), headers(), etc.) somewhere in its render tree —
+// a plain `await prisma.x.findMany()` doesn't count. Without this, Next
+// statically renders these pages once and serves that cached HTML/RSC
+// payload on every later visit, so edits committed via the OTP flow never
+// show up here again until a redeploy (even though they've already landed
+// in Postgres and already reached the public site via triggerPublicRevalidate).
+// Forcing dynamic rendering here cascades to every nested page under
+// /dashboard, so each one re-queries Postgres on every request.
+export const dynamic = "force-dynamic";
+
 const NAV_GROUPS: { title: string; items: { href: string; label: string }[] }[] = [
   {
     title: "Home & Profile",
